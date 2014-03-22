@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io.connect('http://localhost:3000');
+            if (socket) {
+                console.log('Connection established to server...');
+            }
+            socket.on('news', function(data) {
+                console.log(data);
+                socket.emit('my other event', {my: 'data'});
+            });
+        </script>
+        <title>ACE in Action</title>
+        <style type="text/css" media="screen">
+            #editor { 
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id="editor">function foo(items) {
+            var x = "All this is syntax highlighted";
+            return x;
+            }</div>
+
+        <script src="/public/ace/min/ace.js" type="text/javascript" charset="utf-8"></script>
+        <script>
+            socket.emit('getFile', {});
+            // var doc = new Document('hello');
+            //var editor = ace.edit("editor");
+            // var edit = editor.createEditSession(doc,"ace/mode/javascript");
+            // editor.setTheme("ace/theme/monokai");
+            //  editor.getSession().setMode("ace/mode/javascript");
+            //ace.createEditSession(doc,"ace/mode/javascript");
+            var autoSaveHeartBeat;
+            var editor = ace.edit("editor");
+            editor.setTheme("ace/theme/monokai");
+            editor.getSession().setMode("ace/mode/javascript");
+            //   editor.setValue("the new text here"); // or session.setValue
+
+
+            editor.getSession().on('change', function(e) {
+                // e.type, etc
+                console.log('editing...' + editor.getValue());
+                // console(editor.getValue()); // or session.getValue
+         socket.emit('autoSave', {'fileName': 'testEdit.js', 'content': editor.getValue()});       
+        if (!autoSaveHeartBeat) {
+                    autoSaveHeartBeat = setInterval(autoSave, 5000);
+                }
+            });
+            socket.on('getFile', function(msg) {
+                console.log('got getFile:'+JSON.stringify(msg));
+                editor.setValue(msg.content.toString());
+            });
+
+            function autoSave() {
+                //socket.emit('autoSave', {'fileName': 'testEdit.js', 'content': editor.getValue()});
+                clearInterval(autoSaveHeartBeat);
+            }
+        </script>
+
+
+
+
+    </body>
+</html>
